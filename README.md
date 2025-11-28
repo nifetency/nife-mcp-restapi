@@ -285,5 +285,3 @@ This project is licensed under the MIT License.
 - Check documentation
 
 ---
-
-**Built with ❤️ for the MCP community**
