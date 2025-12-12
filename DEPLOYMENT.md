@@ -75,7 +75,7 @@ docker build -t restapi-mcp-server:latest .
 
 **Run the container:**
 ```bash
-docker run -d \
+docker run -d -i \
   --name restapi-mcp-server \
   -p 8080:8080 \
   -e REST_API_BASE_URL="https://api.yourdomain.com" \
