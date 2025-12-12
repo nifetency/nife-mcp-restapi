@@ -743,6 +743,23 @@ class RestApiMCPServer:
         if self.enable_http:
             await self.setup_http_server()
         
+        # In a non-interactive deployment (like Kubernetes), we should not block on stdin.
+        # Instead, we'll wait indefinitely to keep the HTTP server running.
+        if not sys.stdin.isatty():
+            logger.info("Non-interactive mode detected. Server will run indefinitely without listening to stdin.")
+            await asyncio.Event().wait()
+        else:
+            await self._run_stdin_loop()
+
+        # Cleanup HTTP server
+        if self.runner:
+            await self.runner.cleanup()
+            logger.info("HTTP server stopped")
+        
+        logger.info("REST API MCP Server stopped")
+
+    async def _run_stdin_loop(self):
+        """Listen for JSON-RPC requests on stdin."""
         logger.info("Waiting for MCP client connection via stdin/stdout")
         self._start_time = asyncio.get_event_loop().time()
         
