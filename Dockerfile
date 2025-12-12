@@ -23,7 +23,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY src/ ./src/
 
 # Set Python path
-ENV PYTHONPATH=/app
+
+ENV PYTHONPATH=/app:/app/src
 
 # Environment variables with defaults
 ENV REST_API_BASE_URL=""

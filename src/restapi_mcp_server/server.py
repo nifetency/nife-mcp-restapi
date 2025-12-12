@@ -796,10 +796,79 @@ class RestApiMCPServer:
         
         logger.info("REST API MCP Server stopped")
 
+
+
+async def start_http_server(server: RestApiMCPServer):
+    """Start aiohttp HTTP server if enabled"""
+    if not server.enable_http:
+        logger.info("HTTP endpoint disabled")
+        return
+
+    app = web.Application()
+
+    # Health endpoint
+    async def health(request):
+        return web.json_response({"status": "ok", "server": "restapi-mcp-server"})
+
+    app.router.add_get("/health", health)
+
+    server.app = app
+    server.runner = web.AppRunner(app)
+    await server.runner.setup()
+    site = web.TCPSite(server.runner, host=server.host, port=server.port)
+
+    logger.info(f"Starting HTTP server on http://{server.host}:{server.port}")
+    await site.start()
+
+
+async def start_mcp_listener(server: RestApiMCPServer):
+    """
+    Read JSON-RPC messages from stdin.
+    If MCP client disconnects → exit MCP loop but KEEP HTTP running.
+    """
+    logger.info("MCP listener started — waiting for client...")
+
+    reader = asyncio.StreamReader()
+    protocol = asyncio.StreamReaderProtocol(reader)
+    await asyncio.get_running_loop().connect_read_pipe(lambda: protocol, sys.stdin)
+
+    while True:
+        try:
+            line = await reader.readline()
+            if not line:
+                logger.info("MCP client disconnected — continuing HTTP server")
+                break
+
+            line = line.decode().strip()
+            if not line:
+                continue
+
+            request = json.loads(line)
+            response = await server.handle_request(request)
+
+            if response:
+                sys.stdout.write(json.dumps(response) + "\n")
+                sys.stdout.flush()
+
+        except Exception as e:
+            logger.error(f"MCP listener error: {e}", exc_info=True)
+            break
+
+
 async def main():
-    """Main entry point"""
     server = RestApiMCPServer()
-    await server.run()
+    await server.initialize()
+
+    # Start HTTP server (forever)
+    asyncio.create_task(start_http_server(server))
+
+    # Start MCP listener (optional)
+    asyncio.create_task(start_mcp_listener(server))
+
+    # Keep container alive
+    await asyncio.Event().wait()
+
 
 if __name__ == "__main__":
     asyncio.run(main())
+
