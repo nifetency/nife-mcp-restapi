@@ -8,6 +8,9 @@ A dynamic Model Context Protocol (MCP) server that automatically discovers and g
 - **Zero Configuration**: Just provide your REST API base URL and OpenAPI spec
 - **Schema-Driven**: Always up-to-date with your API
 - **Docker Support**: Easy deployment with Docker and Docker Compose
+- **Configurable Ports**: Define custom ports for HTTP endpoints
+- **HTTP Health Endpoints**: Built-in health checks, metrics, and monitoring
+- **Production Ready**: Kubernetes, AWS ECS, Google Cloud Run compatible
 - **Multiple Auth Methods**: Support for Bearer tokens, API keys, Basic auth
 - **Type-Safe**: Validates requests against the OpenAPI schema
 - **Self-Documenting**: Built-in API exploration tools
@@ -38,15 +41,25 @@ cp .env.example .env
 python -m restapi_mcp_server
 ```
 
-### Option 2: Docker
+### Option 2: Docker (Recommended for Deployment)
 
 ```bash
 # Copy and configure environment variables
 cp .env.example .env
 # Edit .env with your REST API details
 
-# Build and run with Docker Compose
+# Quick start (Linux/Mac)
+./quickstart.sh
+
+# Quick start (Windows)
+quickstart.bat
+
+# Or manually with Docker Compose
 docker-compose up -d
+
+# Or build and run manually
+docker build -t restapi-mcp-server .
+docker run -it -p 8080:8080 --env-file .env restapi-mcp-server
 
 # Or build and run manually
 docker build -t restapi-mcp-server .
@@ -99,6 +112,25 @@ REQUEST_TIMEOUT=30
 # Schema Cache TTL (optional, in seconds)
 SCHEMA_CACHE_TTL=3600
 ```
+
+## 🌐 HTTP Endpoints
+
+When `ENABLE_HTTP_ENDPOINT=true` (default), the server provides REST endpoints:
+
+- **GET /** - Server info and available endpoints
+- **GET /health** - Health check (use for monitoring)
+- **GET /metrics** - Server metrics and statistics
+- **GET /schema** - OpenAPI schema information
+- **GET /tools** - List of available MCP tools
+- **GET /api/endpoints** - List of available REST API endpoints
+
+Example:
+```bash
+curl http://localhost:8080/health
+curl http://localhost:8080/api/endpoints
+```
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed deployment instructions.
 
 ## 📖 Usage
 

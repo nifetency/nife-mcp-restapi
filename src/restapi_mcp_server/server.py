@@ -11,6 +11,10 @@ import logging
 from typing import Dict, List, Optional, Any
 from datetime import datetime, timezone
 from aiohttp import web
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Configure logging
 logging.basicConfig(
@@ -730,6 +734,10 @@ class RestApiMCPServer:
     async def run(self):
         """Main MCP server loop"""
         logger.info("Starting REST API MCP Server...")
+        
+        # Initialize schema immediately on startup
+        logger.info("Initializing server and loading schema...")
+        await self.initialize()
         
         # Setup HTTP server if enabled
         if self.enable_http:
