@@ -1,160 +1,172 @@
 # REST API MCP Server
 
-A dynamic Model Context Protocol (MCP) server that automatically discovers and generates tools from any REST API using OpenAPI/Swagger specifications. Zero hardcoding required!
+A dynamic Model Context Protocol (MCP) server that automatically discovers and generates tools from any REST API using OpenAPI/Swagger specifications. This server eliminates manual integration by dynamically adapting to API schemas.
 
-## 🚀 Features
+---
 
-- **Automatic Tool Generation**: Parses OpenAPI/Swagger specs and generates MCP tools dynamically
-- **Zero Configuration**: Just provide your REST API base URL and OpenAPI spec
-- **Schema-Driven**: Always up-to-date with your API
-- **Docker Support**: Easy deployment with Docker and Docker Compose
-- **Configurable Ports**: Define custom ports for HTTP endpoints
-- **HTTP Health Endpoints**: Built-in health checks, metrics, and monitoring
-- **Production Ready**: Kubernetes, AWS ECS, Google Cloud Run compatible
-- **Multiple Auth Methods**: Support for Bearer tokens, API keys, Basic auth
-- **Type-Safe**: Validates requests against the OpenAPI schema
-- **Self-Documenting**: Built-in API exploration tools
+## Overview
 
-## 📋 Prerequisites
+The REST API MCP Server enables seamless integration between Large Language Models and REST APIs by parsing OpenAPI/Swagger specifications and exposing endpoints as MCP tools. The system is schema-driven, ensuring it remains synchronized with API changes without requiring code modifications.
+
+---
+
+## Key Features
+
+### Automatic Tool Generation
+- Parses OpenAPI/Swagger specifications
+- Dynamically generates MCP tools for all endpoints
+- No manual configuration required
+
+### Schema-Driven Architecture
+- Always aligned with API changes
+- Supports OpenAPI 3.x and Swagger 2.x
+- Enables type-safe request validation
+
+### Production Ready
+- Docker and Docker Compose support
+- Kubernetes compatible
+- Deployable on AWS ECS and Google Cloud Run
+- Built-in health checks and monitoring endpoints
+
+### Flexible Authentication
+- Bearer token authentication
+- API key support
+- Basic authentication
+- No-auth mode for public APIs
+
+### Developer Experience
+- Self-documenting API exploration
+- Built-in schema inspection tools
+- Strong logging and error handling
+- Configurable request timeout and caching
+
+---
+
+## Prerequisites
 
 - Python 3.11+
-- Docker (optional, for containerized deployment)
-- A REST API with OpenAPI/Swagger specification
-- API access token (if your API requires authentication)
+- Docker (optional)
+- REST API with OpenAPI/Swagger specification
+- API access credentials (if required)
 
-## 🛠️ Installation
+---
 
-### Option 1: Local Installation
+## Installation
+
+### Local Installation
 
 ```bash
-# Clone or download this folder
+git clone https://github.com/nifetency/nife-mcp-restapi
 cd restapi-mcp-server
 
-# Install dependencies
 pip install -r requirements.txt
 
-# Copy and configure environment variables
 cp .env.example .env
-# Edit .env with your REST API details
+# Edit .env with your API details
 
-# Run the server
 python -m restapi_mcp_server
 ```
 
-### Option 2: Docker (Recommended for Deployment)
+---
+
+### Docker Deployment
 
 ```bash
-# Copy and configure environment variables
 cp .env.example .env
-# Edit .env with your REST API details
+# Edit .env
 
-# Quick start (Linux/Mac)
-./quickstart.sh
-
-# Quick start (Windows)
-quickstart.bat
-
-# Or manually with Docker Compose
-docker-compose up -d
-
-# Or build and run manually
 docker build -t restapi-mcp-server .
 docker run -it -p 8080:8080 --env-file .env restapi-mcp-server
-
-# Or build and run manually
-docker build -t restapi-mcp-server .
-docker run -it --env-file .env restapi-mcp-server
 ```
 
-### Option 3: Docker with Environment Variables
+---
+
+### Docker with Direct Environment Variables
 
 ```bash
 docker run -it \
   -e REST_API_BASE_URL=https://api.example.com \
+  -e MCP_MODE=http 
   -e OPENAPI_SPEC_URL=https://api.example.com/openapi.json \
   -e API_ACCESS_TOKEN=your_token_here \
   restapi-mcp-server:latest
 ```
 
-## 🔧 Configuration
+---
+
+## Configuration
 
 Create a `.env` file in the project root:
 
 ```env
-# REST API Base URL (REQUIRED)
 REST_API_BASE_URL=https://api.example.com
-
-# OpenAPI Spec URL (REQUIRED)
-# Can be a URL or local file path
 OPENAPI_SPEC_URL=https://api.example.com/openapi.json
 
-# Authentication Type (optional)
-# Options: bearer, apikey, basic, none
 AUTH_TYPE=bearer
-
-# API Access Token (required for bearer auth)
 API_ACCESS_TOKEN=your_access_token_here
 
-# API Key Header Name (required for apikey auth)
 API_KEY_HEADER=X-API-Key
 API_KEY_VALUE=your_api_key_here
 
-# Basic Auth (required for basic auth)
 BASIC_AUTH_USERNAME=username
 BASIC_AUTH_PASSWORD=password
 
-# Logging Level (optional)
 LOG_LEVEL=INFO
-
-# Request Timeout (optional, in seconds)
 REQUEST_TIMEOUT=30
-
-# Schema Cache TTL (optional, in seconds)
 SCHEMA_CACHE_TTL=3600
+MCP_MODE=http
+
 ```
 
-## 🌐 HTTP Endpoints
+---
 
-When `ENABLE_HTTP_ENDPOINT=true` (default), the server provides REST endpoints:
+## HTTP Endpoints
 
-- **GET /** - Server info and available endpoints
-- **GET /health** - Health check (use for monitoring)
-- **GET /metrics** - Server metrics and statistics
-- **GET /schema** - OpenAPI schema information
-- **GET /tools** - List of available MCP tools
-- **GET /api/endpoints** - List of available REST API endpoints
+When HTTP mode is enabled, the server exposes the following endpoints:
+
+- GET / – Server information
+- GET /health – Health check
+- GET /metrics – Metrics and statistics
+- GET /schema – OpenAPI schema details
+- GET /tools – Available MCP tools
+- GET /api/endpoints – List of API endpoints
 
 Example:
+
 ```bash
 curl http://localhost:8080/health
 curl http://localhost:8080/api/endpoints
 ```
 
-See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed deployment instructions.
+---
 
-## 📖 Usage
+## Integration
 
-### With Claude Desktop
-
-Add to your Claude Desktop configuration (`claude_desktop_config.json`):
+### Claude Desktop Configuration
 
 ```json
 {
   "mcpServers": {
-    "restapi": {
+    "graphql": {
       "command": "python",
       "args": ["-m", "restapi_mcp_server"],
+      "cwd": "<PATH_TO_REPO_ROOT>",
       "env": {
+        "MCP_MODE": "stdio",
         "REST_API_BASE_URL": "https://api.example.com",
         "OPENAPI_SPEC_URL": "https://api.example.com/openapi.json",
-        "API_ACCESS_TOKEN": "your_token"
+        "API_ACCESS_TOKEN": "",
+        "ENABLE_HTTP_ENDPOINT": "false"
+        "PYTHONPATH": ""
       }
     }
   }
 }
 ```
 
-Or using Docker:
+---
+
+### Docker-Based Integration
 
 ```json
 {
@@ -175,145 +187,152 @@ Or using Docker:
 }
 ```
 
-### Available Tools
+---
 
-The server automatically generates the following types of tools:
+## Available Tools
 
-1. **Endpoint Tools**: `<method>_<endpoint>` - Execute any API endpoint
-   - Examples: `get_users`, `post_users`, `get_users_by_id`, `delete_users_by_id`
-2. **Utility Tools**:
-   - `list_available_endpoints` - List all API endpoints
-   - `get_endpoint_info` - Get detailed endpoint information
-   - `get_schema_info` - Get OpenAPI schema information
-   - `execute_custom_request` - Make custom API requests
-   - `health_check` - Check server health
+The server dynamically generates the following tool types:
 
-### Example Queries
+### Endpoint Tools
+Format: <method>_<endpoint>
 
-```
-# List available endpoints
-"Show me all available API endpoints"
+Examples:
+- get_users
+- post_users
+- get_users_by_id
+- delete_users_by_id
 
-# Execute a GET request
-"Get all users from the API"
+### Utility Tools
+- list_available_endpoints
+- get_endpoint_info
+- get_schema_info
+- execute_custom_request
+- health_check
 
-# Execute a POST request
-"Create a new user with name 'John Doe' and email 'john@example.com'"
+---
 
-# Execute with path parameters
-"Get user with ID 123"
-
-# Execute with query parameters
-"Get users with limit 10 and status active"
-
-# Get endpoint information
-"What parameters does the POST /users endpoint accept?"
-```
-
-## 🏗️ Architecture
+## Example Usage
 
 ```
-┌─────────────────────────────────────────────────┐
-│              Claude Desktop / CLI               │
-└───────────────────┬─────────────────────────────┘
-                    │ MCP Protocol (stdio)
-┌───────────────────▼─────────────────────────────┐
-│           REST API MCP Server                   │
-│  ┌─────────────────────────────────────────┐   │
-│  │      Schema Manager                     │   │
-│  │  • Parses OpenAPI/Swagger specs         │   │
-│  │  • Caches endpoints and schemas         │   │
-│  │  • Generates tool definitions           │   │
-│  └─────────────────────────────────────────┘   │
-│  ┌─────────────────────────────────────────┐   │
-│  │      REST Client                        │   │
-│  │  • Executes HTTP requests               │   │
-│  │  • Handles authentication               │   │
-│  │  • Error handling and retries           │   │
-│  └─────────────────────────────────────────┘   │
-└───────────────────┬─────────────────────────────┘
-                    │ HTTPS
-┌───────────────────▼─────────────────────────────┐
-│           Your REST API                         │
-└─────────────────────────────────────────────────┘
+Show all available API endpoints
+Get all users from the API
+Create a new user with name "John Doe" and email "john@example.com"
+Get user with ID 123
+Get users with limit 10 and status active
+What parameters does the POST /users endpoint accept?
 ```
 
-## 📝 OpenAPI Specification Support
+---
 
-The server supports both OpenAPI 3.x and Swagger 2.x specifications:
+## Architecture
 
-- **OpenAPI 3.0+**: Full support for all features
-- **Swagger 2.0**: Full backward compatibility
+```
+Client (MCP)
+   │
+   ▼
+REST API MCP Server
+   ├── Schema Manager
+   │     • Parses OpenAPI specifications
+   │     • Caches schemas
+   │     • Generates tool definitions
+   │
+   └── REST Client
+         • Executes HTTP requests
+         • Handles authentication
+         • Manages errors and retries
+   │
+   ▼
+REST API
+```
 
-Specification can be provided as:
-- URL to JSON file
-- URL to YAML file
+---
+
+## OpenAPI Specification Support
+
+- OpenAPI 3.x (full support)
+- Swagger 2.0 (backward compatible)
+
+Supported formats:
+- Remote JSON URL
+- Remote YAML URL
 - Local file path
 
-## 🔐 Authentication Methods
+---
+
+## Authentication Methods
 
 ### Bearer Token
+
 ```env
 AUTH_TYPE=bearer
-API_ACCESS_TOKEN=your_bearer_token
+API_ACCESS_TOKEN=your_token
 ```
 
 ### API Key
+
 ```env
 AUTH_TYPE=apikey
 API_KEY_HEADER=X-API-Key
-API_KEY_VALUE=your_api_key
+API_KEY_VALUE=your_key
 ```
 
-### Basic Auth
+### Basic Authentication
+
 ```env
 AUTH_TYPE=basic
 BASIC_AUTH_USERNAME=username
 BASIC_AUTH_PASSWORD=password
 ```
 
-### No Auth
+### No Authentication
+
 ```env
 AUTH_TYPE=none
 ```
 
-## 🤝 Contributing
+---
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+## Troubleshooting
 
-## 📝 License
+### Schema Not Loading
+- Verify OpenAPI spec URL
+- Check API availability
+- Ensure correct format (JSON/YAML)
+
+### Docker Container Exits Immediately
+- Verify environment variables
+- Check container logs
+
+```bash
+docker logs <container_id>
+```
+
+### Tool Execution Fails
+- Verify authentication credentials
+- Check endpoint parameters
+- Confirm API permissions
+
+### No Tools Generated
+- Validate OpenAPI specification
+- Ensure paths are defined
+- Check server logs
+
+---
+
+## Contributing
+
+Contributions are welcome. Please submit a pull request or open an issue for discussion.
+
+---
+
+## License
 
 This project is licensed under the MIT License.
 
-## 🙏 Acknowledgments
-
-- Built on the [Model Context Protocol](https://modelcontextprotocol.io/)
-- Inspired by the need for dynamic, schema-driven API integration
-
-## 🔍 Troubleshooting
-
-### Schema Not Loading
-- Check OpenAPI spec URL and format
-- Verify base URL is correct
-- Check network connectivity
-
-### Docker Container Exits Immediately
-- Verify environment variables are set correctly
-- Check logs with `docker logs <container_id>`
-
-### Tool Calls Failing
-- Check API authentication and permissions
-- Verify endpoint paths and parameters
-- Check API rate limits
-
-### No Tools Generated
-- Verify OpenAPI spec is valid
-- Check spec contains paths
-- Review server logs
-
-## 📧 Support
-
-- Open an issue on GitHub
-- Check documentation
-
 ---
+
+## Support
+
+For issues and questions:
+- Open an issue in the repository
+- Review documentation and logs
