@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nife-restapi-mcp-server"
+version = "1.0.2"
+description = "Dynamic MCP server that auto-generates tools from any REST API OpenAPI/Swagger schema"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.11"
+authors = [
+    { name = "Varun S", email = "varun@nife.io" }
+]
+keywords = ["mcp", "restapi", "openapi", "swagger", "llm", "claude", "ai", "model-context-protocol"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Intended Audience :: Developers",
+]
+dependencies = [
+    "requests>=2.31.0",
+    "python-dotenv>=1.0.0",
+    "pyyaml>=6.0.1",
+    "aiohttp>=3.9.0",
+    "python-json-logger>=2.0.7",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.1.0",
+    "mypy>=1.7.0",
+    "types-requests>=2.31.0",
+    "types-pyyaml>=6.0.12",
+]
+
+[project.scripts]
+restapi-mcp-server = "restapi_mcp_server.__main__:main_sync"
+
+[project.urls]
+Repository = "https://github.com/nifetency/nife-mcp-restapi"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

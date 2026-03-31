@@ -1,261 +1,153 @@
 # REST API MCP Server
 
-A dynamic Model Context Protocol (MCP) server that automatically discovers and generates tools from any REST API using OpenAPI/Swagger specifications. This server eliminates manual integration by dynamically adapting to API schemas.
+![Python](https://img.shields.io/badge/python-3.11+-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+![MCP](https://img.shields.io/badge/MCP-compatible-purple)
 
----
-
-## Overview
-
-The REST API MCP Server enables seamless integration between Large Language Models and REST APIs by parsing OpenAPI/Swagger specifications and exposing endpoints as MCP tools. The system is schema-driven, ensuring it remains synchronized with API changes without requiring code modifications.
-
----
-
-## Key Features
-
-### Automatic Tool Generation
-- Parses OpenAPI/Swagger specifications
-- Dynamically generates MCP tools for all endpoints
-- No manual configuration required
-
-### Schema-Driven Architecture
-- Always aligned with API changes
-- Supports OpenAPI 3.x and Swagger 2.x
-- Enables type-safe request validation
-
-### Production Ready
-- Docker and Docker Compose support
-- Kubernetes compatible
-- Deployable on AWS ECS and Google Cloud Run
-- Built-in health checks and monitoring endpoints
-
-### Flexible Authentication
-- Bearer token authentication
-- API key support
-- Basic authentication
-- No-auth mode for public APIs
-
-### Developer Experience
-- Self-documenting API exploration
-- Built-in schema inspection tools
-- Strong logging and error handling
-- Configurable request timeout and caching
-
----
-
-## Prerequisites
-
-- Python 3.11+
-- Docker (optional)
-- REST API with OpenAPI/Swagger specification
-- API access credentials (if required)
+A dynamic Model Context Protocol (MCP) server that automatically discovers and generates tools from any REST API using OpenAPI/Swagger specifications. Point it at any OpenAPI spec and it instantly exposes every endpoint as an MCP tool — zero manual configuration.
 
 ---
 
 ## Installation
 
-### Local Installation
-
 ```bash
-git clone https://github.com/nifetency/nife-mcp-restapi
-cd restapi-mcp-server
-
-pip install -r requirements.txt
-
-cp .env.example .env
-# Edit .env with your API details
-
-python -m restapi_mcp_server
-```
-
----
-
-### Docker Deployment
-
-```bash
-cp .env.example .env
-# Edit .env
-
-docker build -t restapi-mcp-server .
-docker run -it -p 8080:8080 --env-file .env restapi-mcp-server
-```
-
----
-
-### Docker with Direct Environment Variables
-
-```bash
-docker run -it \
-  -e REST_API_BASE_URL=https://api.example.com \
-  -e MCP_MODE=http 
-  -e OPENAPI_SPEC_URL=https://api.example.com/openapi.json \
-  -e API_ACCESS_TOKEN=your_token_here \
-  restapi-mcp-server:latest
+pip install nife-restapi-mcp-server
 ```
 
 ---
 
 ## Configuration
 
-Create a `.env` file in the project root:
+There are **four ways** to configure the server. They are applied in priority order — higher entries win:
+
+| Priority | Method | Best for |
+|----------|--------|----------|
+| 1 | CLI arguments | One-off runs, testing |
+| 2 | Environment variables | Docker, CI/CD, shell scripts |
+| 3 | `.env` file | Local development |
+| 4 | Defaults | Nothing required by default |
+
+### Method 1 — CLI Arguments
+
+```bash
+restapi-mcp-server --base-url https://api.example.com --spec-url https://api.example.com/openapi.json --token mytoken
+```
+
+All available flags:
+
+```
+--base-url URL       REST API base URL (required if not set via env)
+--spec-url URL       OpenAPI/Swagger spec URL or local file path (required if not set via env)
+--token TOKEN        API access token for bearer authentication
+--auth-type TYPE     Authentication type: bearer, apikey, basic, none (default: bearer)
+--mode stdio|http    Server mode (default: stdio)
+--port PORT          HTTP port, only used in http mode (default: 8080)
+--host HOST          HTTP host, only used in http mode (default: 0.0.0.0)
+--log-level LEVEL    Logging level: DEBUG, INFO, WARNING, ERROR (default: INFO)
+--env-file PATH      Path to a custom .env file
+--version            Show version and exit
+```
+
+### Method 2 — Environment Variables
+
+```bash
+export REST_API_BASE_URL=https://api.example.com
+export OPENAPI_SPEC_URL=https://api.example.com/openapi.json
+export API_ACCESS_TOKEN=your_token_here
+export MCP_MODE=stdio
+
+restapi-mcp-server
+```
+
+### Method 3 — `.env` File
+
+Create a `.env` file in your working directory:
 
 ```env
 REST_API_BASE_URL=https://api.example.com
 OPENAPI_SPEC_URL=https://api.example.com/openapi.json
-
+API_ACCESS_TOKEN=your_token_here
 AUTH_TYPE=bearer
-API_ACCESS_TOKEN=your_access_token_here
-
-API_KEY_HEADER=X-API-Key
-API_KEY_VALUE=your_api_key_here
-
-BASIC_AUTH_USERNAME=username
-BASIC_AUTH_PASSWORD=password
-
+MCP_MODE=stdio
 LOG_LEVEL=INFO
-REQUEST_TIMEOUT=30
-SCHEMA_CACHE_TTL=3600
-MCP_MODE=http
-
 ```
 
----
-
-## HTTP Endpoints
-
-When HTTP mode is enabled, the server exposes the following endpoints:
-
-- GET / – Server information
-- GET /health – Health check
-- GET /metrics – Metrics and statistics
-- GET /schema – OpenAPI schema details
-- GET /tools – Available MCP tools
-- GET /api/endpoints – List of API endpoints
-
-Example:
+Then just run:
 
 ```bash
-curl http://localhost:8080/health
-curl http://localhost:8080/api/endpoints
+restapi-mcp-server
 ```
 
----
+### Method 4 — Claude Desktop Config (most common for MCP use)
 
-## Integration
-
-### Claude Desktop Configuration
+No `.env` file needed. Pass everything via the `env` block in `claude_desktop_config.json`:
 
 ```json
 {
   "mcpServers": {
-    "graphql": {
-      "command": "python",
-      "args": ["-m", "restapi_mcp_server"],
-      "cwd": "<PATH_TO_REPO_ROOT>",
+    "restapi": {
+      "command": "restapi-mcp-server",
       "env": {
-        "MCP_MODE": "stdio",
         "REST_API_BASE_URL": "https://api.example.com",
         "OPENAPI_SPEC_URL": "https://api.example.com/openapi.json",
-        "API_ACCESS_TOKEN": "",
+        "API_ACCESS_TOKEN": "your_token_here",
+        "MCP_MODE": "stdio",
         "ENABLE_HTTP_ENDPOINT": "false"
-        "PYTHONPATH": ""
       }
     }
   }
 }
 ```
 
----
-
-### Docker-Based Integration
-
-```json
-{
-  "mcpServers": {
-    "restapi": {
-      "command": "docker",
-      "args": [
-        "run",
-        "-i",
-        "--rm",
-        "-e", "REST_API_BASE_URL=https://api.example.com",
-        "-e", "OPENAPI_SPEC_URL=https://api.example.com/openapi.json",
-        "-e", "API_ACCESS_TOKEN=your_token",
-        "restapi-mcp-server:latest"
-      ]
-    }
-  }
-}
-```
+Claude Desktop injects the `env` block values directly into the process — this is the standard MCP pattern.
 
 ---
 
-## Available Tools
+## Environment Variable Reference
 
-The server dynamically generates the following tool types:
-
-### Endpoint Tools
-Format: <method>_<endpoint>
-
-Examples:
-- get_users
-- post_users
-- get_users_by_id
-- delete_users_by_id
-
-### Utility Tools
-- list_available_endpoints
-- get_endpoint_info
-- get_schema_info
-- execute_custom_request
-- health_check
-
----
-
-## Example Usage
-
-```
-Show all available API endpoints
-Get all users from the API
-Create a new user with name "John Doe" and email "john@example.com"
-Get user with ID 123
-Get users with limit 10 and status active
-What parameters does the POST /users endpoint accept?
-```
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `REST_API_BASE_URL` | Yes | — | REST API base URL |
+| `OPENAPI_SPEC_URL` | Yes | — | OpenAPI/Swagger spec URL or local file path |
+| `AUTH_TYPE` | No | `bearer` | Auth method: `bearer`, `apikey`, `basic`, `none` |
+| `API_ACCESS_TOKEN` | No | — | Bearer token for auth |
+| `API_KEY_HEADER` | No | `X-API-Key` | Header name for API key auth |
+| `API_KEY_VALUE` | No | — | API key value |
+| `BASIC_AUTH_USERNAME` | No | — | Username for basic auth |
+| `BASIC_AUTH_PASSWORD` | No | — | Password for basic auth |
+| `MCP_MODE` | No | `stdio` | `stdio` or `http` |
+| `ENABLE_HTTP_ENDPOINT` | No | `true` | Enable HTTP health/metrics endpoints |
+| `MCP_SERVER_PORT` | No | `8080` | HTTP server port |
+| `MCP_SERVER_HOST` | No | `0.0.0.0` | HTTP server host |
+| `LOG_LEVEL` | No | `INFO` | Logging verbosity |
+| `REQUEST_TIMEOUT` | No | `30` | Request timeout in seconds |
+| `SCHEMA_CACHE_TTL` | No | `3600` | Schema cache TTL in seconds |
 
 ---
 
-## Architecture
+## Operating Modes
 
-```
-Client (MCP)
-   │
-   ▼
-REST API MCP Server
-   ├── Schema Manager
-   │     • Parses OpenAPI specifications
-   │     • Caches schemas
-   │     • Generates tool definitions
-   │
-   └── REST Client
-         • Executes HTTP requests
-         • Handles authentication
-         • Manages errors and retries
-   │
-   ▼
-REST API
+### MCP Mode (`stdio`) — for Claude Desktop, Cursor, MCP clients
+
+```bash
+restapi-mcp-server --base-url https://api.example.com --spec-url https://api.example.com/openapi.json --mode stdio
 ```
 
----
+Communicates via stdin/stdout. No HTTP server is started. This is the default.
 
-## OpenAPI Specification Support
+### HTTP Mode — for Docker, Kubernetes, server deployments
 
-- OpenAPI 3.x (full support)
-- Swagger 2.0 (backward compatible)
+```bash
+restapi-mcp-server --base-url https://api.example.com --spec-url https://api.example.com/openapi.json --mode http --port 8080
+```
 
-Supported formats:
-- Remote JSON URL
-- Remote YAML URL
-- Local file path
+Starts an HTTP server with health and metrics endpoints:
+- `GET /` — server info
+- `GET /health` — health check
+- `GET /metrics` — server metrics
+- `GET /schema` — OpenAPI schema summary
+- `GET /tools` — all generated tools
+- `GET /api/endpoints` — all API endpoints
 
 ---
 
@@ -292,47 +184,113 @@ AUTH_TYPE=none
 
 ---
 
-## Troubleshooting
-
-### Schema Not Loading
-- Verify OpenAPI spec URL
-- Check API availability
-- Ensure correct format (JSON/YAML)
-
-### Docker Container Exits Immediately
-- Verify environment variables
-- Check container logs
+## Docker
 
 ```bash
-docker logs <container_id>
+docker build -t restapi-mcp-server .
+
+docker run -p 8080:8080 \
+  -e REST_API_BASE_URL=https://api.example.com \
+  -e OPENAPI_SPEC_URL=https://api.example.com/openapi.json \
+  -e API_ACCESS_TOKEN=your_token \
+  -e MCP_MODE=http \
+  restapi-mcp-server
 ```
 
-### Tool Execution Fails
-- Verify authentication credentials
-- Check endpoint parameters
-- Confirm API permissions
+Or with Docker Compose:
 
-### No Tools Generated
-- Validate OpenAPI specification
-- Ensure paths are defined
-- Check server logs
+```bash
+cp .env.example .env   # fill in your values
+docker-compose up
+```
 
 ---
 
-## Contributing
+## Available Tools
 
-Contributions are welcome. Please submit a pull request or open an issue for discussion.
+The server dynamically generates the following tool types:
+
+### Endpoint Tools
+Named by HTTP method and path: `<method>_<path_parts>`
+
+Examples:
+- `get_users`
+- `post_users`
+- `get_users_by_id`
+- `delete_users_by_id`
+- `put_users_by_id`
+
+### Utility Tools
+- `list_available_endpoints` — list all endpoints (filterable by method or path)
+- `get_endpoint_info` — detailed info about a specific endpoint
+- `get_schema_info` — OpenAPI schema summary or specific model details
+- `execute_custom_request` — run any HTTP request with full control
+- `health_check` — server health and schema status
+
+---
+
+## OpenAPI Specification Support
+
+- OpenAPI 3.x (full support)
+- Swagger 2.0 (backward compatible)
+
+Supported spec sources:
+- Remote JSON URL
+- Remote YAML URL
+- Local JSON file
+- Local YAML file
+
+---
+
+## Key Features
+
+- **Zero config endpoints** — auto-parses any OpenAPI/Swagger spec and generates MCP tools
+- **Dual mode** — stdio for MCP clients, HTTP for server deployments
+- **Flexible config** — CLI args, env vars, .env file, or Claude Desktop env block
+- **Multiple auth methods** — Bearer, API key, Basic, or none
+- **Production ready** — Docker, Kubernetes, AWS ECS, Google Cloud Run compatible
+- **Self-documenting** — `list_available_endpoints`, `get_endpoint_info`, `get_schema_info` tools built in
+
+---
+
+## Troubleshooting
+
+**`[ERROR] REST API base URL not configured`**
+
+Set `REST_API_BASE_URL` via any method above. The most common fix:
+```bash
+restapi-mcp-server --base-url https://your-api.com
+```
+
+**`[ERROR] OpenAPI spec URL not configured`**
+
+Set `OPENAPI_SPEC_URL` via any method above:
+```bash
+restapi-mcp-server --spec-url https://your-api.com/openapi.json
+```
+
+**Port already in use**
+
+Change the port:
+```bash
+restapi-mcp-server --mode http --port 9090
+```
+
+**Docker container exits immediately**
+
+Make sure you're using HTTP mode:
+```bash
+docker run -e MCP_MODE=http -e REST_API_BASE_URL=... -e OPENAPI_SPEC_URL=... restapi-mcp-server
+```
+
+**Schema not loading**
+
+- Verify the spec URL is reachable
+- Check the format is valid JSON or YAML
+- Ensure the spec is OpenAPI 3.x or Swagger 2.0
 
 ---
 
 ## License
 
-This project is licensed under the MIT License.
-
----
-
-## Support
-
-For issues and questions:
-- Open an issue in the repository
-- Review documentation and logs
+MIT
