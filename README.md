@@ -8,6 +8,15 @@ A dynamic Model Context Protocol (MCP) server that automatically discovers and g
 
 ---
 
+## Documentation
+
+For full documentation, guides, and examples, visit:
+
+https://nife.io/mcp_opensource
+
+---
+
+
 ## Installation
 
 ```bash
@@ -250,7 +259,7 @@ Supported spec sources:
 - **Multiple auth methods** — Bearer, API key, Basic, or none
 - **Production ready** — Docker, Kubernetes, AWS ECS, Google Cloud Run compatible
 - **Self-documenting** — `list_available_endpoints`, `get_endpoint_info`, `get_schema_info` tools built in
-
+- **Documentation** — https://nife.io/mcp_opensource
 ---
 
 ## Troubleshooting
